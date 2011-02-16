@@ -2,21 +2,35 @@
  * Copyright (c) 2010, Vanderbilt University
  * All rights reserved.
  *
- * Permission to use, copy, modify, and distribute this software and its
- * documentation for any purpose, without fee, and without written agreement is
- * hereby granted, provided that the above copyright notice, the following
- * two paragraphs and the author appear in all copies of this software.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:  
  *
- * IN NO EVENT SHALL THE VANDERBILT UNIVERSITY BE LIABLE TO ANY PARTY FOR
- * DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT
- * OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE VANDERBILT
- * UNIVERSITY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * - Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the following disclaimer.
+ * - Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
+ *   documentation and/or other materials provided with the
+ *   distribution.
+ * - Neither the name of the copyright holder nor the names of
+ *   its contributors may be used to endorse or promote products derived
+ *   from this software without specific prior written permission.
  *
- * THE VANDERBILT UNIVERSITY SPECIFICALLY DISCLAIMS ANY WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
- * ON AN "AS IS" BASIS, AND THE VANDERBILT UNIVERSITY HAS NO OBLIGATION TO
- * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE
+ * COPYRIGHT HOLDER OR ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/**
  *
  * Author: Janos Sallai, Miklos Maroti
  * Author: Thomas Schmid (port to CC2520)
@@ -211,7 +225,7 @@ implementation{
 
       cmd = CMD_SIGNAL_DONE;
     }else{
-      ASSERT(FALSE);
+      RADIO_ASSERT(FALSE);
     }
 
     // make sure the rest of the command processing is called
@@ -224,7 +238,7 @@ implementation{
     cc2520_status_t status;
     uint8_t v;
 
-    ASSERT( call SpiResource.isOwner() );
+    RADIO_ASSERT( call SpiResource.isOwner() );
 
     call CSN.set();
     call CSN.clr();
@@ -233,7 +247,7 @@ implementation{
       // we can use 1 byte less to write this register using the
       // register write command
 
-      ASSERT( reg == (reg & CC2520_FREG_MASK) );
+      RADIO_ASSERT( reg == (reg & CC2520_FREG_MASK) );
 
 
       status.value = call SpiByte.write(CC2520_CMD_REGISTER_WRITE | reg);
@@ -243,7 +257,7 @@ implementation{
       // we have to use the memory write command as the register is in
       // SREG
 
-      ASSERT( reg == (reg & CC2520_SREG_MASK) );
+      RADIO_ASSERT( reg == (reg & CC2520_SREG_MASK) );
 
       // the register has to be below the 0x100 memory address. Thus, we
       // don't have to add anything to the MEMORY_WRITE command.
@@ -270,7 +284,7 @@ implementation{
       mem_addr = 0x200;
     }
 
-    ASSERT( call SpiResource.isOwner() );
+    RADIO_ASSERT( call SpiResource.isOwner() );
 
     call CSN.set();
     call CSN.clr();
@@ -301,7 +315,7 @@ implementation{
   inline uint8_t readMemory(uint16_t mem_addr, uint8_t* buf, uint8_t count){
     uint8_t i, value = 0;
 
-    ASSERT( call SpiResource.isOwner() );
+    RADIO_ASSERT( call SpiResource.isOwner() );
 
     call CSN.set();
     call CSN.clr();
@@ -327,7 +341,7 @@ implementation{
 
   inline void CCM(uint8_t priority, uint8_t key_addr, uint8_t payload_len, uint8_t nonce_addr, uint16_t start_addr, uint16_t dest_addr, uint8_t auth_len, uint8_t mic_len){
 
-    ASSERT( call SpiResource.isOwner() );
+    RADIO_ASSERT( call SpiResource.isOwner() );
 
     call CSN.set();
     call CSN.clr();
@@ -350,7 +364,7 @@ implementation{
 
   inline void UCCM(uint8_t priority, uint8_t key_addr, uint8_t payload_len, uint8_t nonce_addr, uint16_t start_addr, uint16_t dest_addr, uint8_t auth_len, uint8_t mic_len){
 
-    ASSERT( call SpiResource.isOwner() );
+    RADIO_ASSERT( call SpiResource.isOwner() );
 
     call CSN.set();
     call CSN.clr();
@@ -372,7 +386,7 @@ implementation{
 
   inline void CBCMAC(uint8_t priority, uint8_t key_addr, uint8_t payload_len, uint16_t start_addr, uint16_t dest_addr, uint8_t mic_len){
     
-    ASSERT( call SpiResource.isOwner() );
+    RADIO_ASSERT( call SpiResource.isOwner() );
 
     call CSN.set();
     call CSN.clr();
@@ -394,7 +408,7 @@ implementation{
   inline void UCBCMAC(){}
 
   inline void CTR(uint8_t priority, uint8_t key_addr, uint8_t payload_len, uint8_t nonce_addr, uint16_t start_addr, uint16_t dest_addr){
-    ASSERT( call SpiResource.isOwner() );
+    RADIO_ASSERT( call SpiResource.isOwner() );
 
     call CSN.set();
     call CSN.clr();
@@ -421,7 +435,7 @@ implementation{
 
   inline void MEMCP(uint8_t priority, uint16_t count, uint16_t start_addr, uint16_t dest_addr){
 
-    ASSERT( call SpiResource.isOwner() );
+    RADIO_ASSERT( call SpiResource.isOwner() );
 
     call CSN.set();
     call CSN.clr();
@@ -445,7 +459,7 @@ implementation{
   inline cc2520_status_t strobe(uint8_t reg){
     cc2520_status_t status;
 
-    ASSERT( call SpiResource.isOwner() );
+    RADIO_ASSERT( call SpiResource.isOwner() );
 
     call CSN.set();
     call CSN.clr();
@@ -464,18 +478,18 @@ implementation{
   inline uint8_t readRegister(uint8_t reg){
     uint8_t value = 0;
 
-    ASSERT( call SpiResource.isOwner() );
+    RADIO_ASSERT( call SpiResource.isOwner() );
 
     call CSN.set();
     call CSN.clr();
 
     if( reg <= CC2520_FREG_MASK ){
-      ASSERT( reg == (reg & CC2520_FREG_MASK) );
+      RADIO_ASSERT( reg == (reg & CC2520_FREG_MASK) );
       call SpiByte.write(CC2520_CMD_REGISTER_READ | reg);
 
     }
     else{
-      ASSERT( reg == (reg & CC2520_SREG_MASK) );
+      RADIO_ASSERT( reg == (reg & CC2520_SREG_MASK) );
 
       call SpiByte.write(CC2520_CMD_MEMORY_WRITE);
       call SpiByte.write(reg);
@@ -491,7 +505,7 @@ implementation{
     cc2520_status_t status;
     uint8_t idx;
 
-    ASSERT( call SpiResource.isOwner() );
+    RADIO_ASSERT( call SpiResource.isOwner() );
 
     call CSN.set();
     call CSN.clr();
@@ -526,8 +540,8 @@ implementation{
   inline cc2520_status_t readLengthFromRxFifo(uint8_t* lengthPtr){
     cc2520_status_t status;
 
-    ASSERT( call SpiResource.isOwner() );
-    ASSERT( call CSN.get() == 1 );
+    RADIO_ASSERT( call SpiResource.isOwner() );
+    RADIO_ASSERT( call CSN.get() == 1 );
 
     // FIXME: ???? why do we do this ????
     call CSN.set();
@@ -546,8 +560,8 @@ implementation{
   inline cc2520_status_t readLengthFromRxFifo_cp(uint8_t* lengthPtr){
     cc2520_status_t status;
 
-    ASSERT( call SpiResource.isOwner() );
-    ASSERT( call CSN.get() == 1 );
+    RADIO_ASSERT( call SpiResource.isOwner() );
+    RADIO_ASSERT( call CSN.get() == 1 );
 
     // FIXME: ???? why do we do this ????
     call CSN.set();
@@ -568,11 +582,11 @@ implementation{
     uint8_t idx;
 
     // readLengthFromRxFifo was called before, so CSN is cleared and spi is ours
-    ASSERT( call CSN.get() == 0 );
+    RADIO_ASSERT( call CSN.get() == 0 );
 
     for(idx = 0; idx<length; idx++) {
       //waitForRxFifo();
-      ASSERT(call FIFO.get());
+      RADIO_ASSERT(call FIFO.get());
       data[idx] = call SpiByte.write(0);
     }
   }
@@ -584,14 +598,14 @@ implementation{
     // readLengthFromRxFifo was called before, so CSN is cleared and spi is ours
 
     //waitForRxFifo();
-    ASSERT(call FIFO.get());
+    RADIO_ASSERT(call FIFO.get());
     *rssiPtr = call SpiByte.write(0);
   }
 
   inline void readCrcOkAndLqiFromRxFifo(uint8_t* crcOkAndLqiPtr){
     // readLengthFromRxFifo was called before, so CSN is cleared and spi is ours
 
-    ASSERT( call CSN.get() == 0 );
+    RADIO_ASSERT( call CSN.get() == 0 );
 
     //waitForRxFifo(); // JK
     *crcOkAndLqiPtr = call SpiByte.write(0);
@@ -825,8 +839,8 @@ implementation{
   }
 
   inline void changeChannel(){
-    ASSERT( cmd == CMD_CHANNEL );
-    ASSERT( state == STATE_PD || state == STATE_IDLE || ( state == STATE_RX_ON && call RadioAlarm.isFree()));
+    RADIO_ASSERT( cmd == CMD_CHANNEL );
+    RADIO_ASSERT( state == STATE_PD || state == STATE_IDLE || ( state == STATE_RX_ON && call RadioAlarm.isFree()));
 
     if( isSpiAcquired() ){
       setChannel();
@@ -1004,7 +1018,7 @@ implementation{
        // stop receiving
        strobe(CC2520_CMD_SRFOFF);
 
-   ASSERT( ! radioIrq );
+   RADIO_ASSERT( ! radioIrq );
 
    data = getPayload(msg);
    length = getHeader(msg)->length;
@@ -1132,10 +1146,10 @@ implementation{
 
    // get status
    status = getStatus();
-   ASSERT ( status.tx_active == 1);
+   RADIO_ASSERT ( status.tx_active == 1);
    // FIXME: have to check for underflow exception!
-   //ASSERT ( status.tx_underflow == 0);
-   ASSERT ( status.xosc_stable == 1);
+   //RADIO_ASSERT ( status.tx_underflow == 0);
+   RADIO_ASSERT ( status.xosc_stable == 1);
 
    if( timesync != 0 )
      *(timesync_absolute_t*)timesync = (*(timesync_relative_t*)timesync) + time32;
@@ -1196,12 +1210,12 @@ implementation{
    cc2520_status_t status;
 
    // reset the radio, initialize registers to default values
-   ASSERT(0);
+   RADIO_ASSERT(0);
    resetRadio();
 
    call SfdCapture.disable();
 
-   ASSERT(state == STATE_PD);
+   RADIO_ASSERT(state == STATE_PD);
 
    // start oscillator
    strobe(CC2520_CMD_SXOSCON);
@@ -1213,12 +1227,12 @@ implementation{
 
    // get status
    status = getStatus();
-   ASSERT ( status.rssi_valid == 0);
-   //ASSERT ( status.lock == 0);
-   ASSERT ( status.tx_active == 0);
-   //ASSERT ( status.enc_busy == 0);
-   //ASSERT ( status.tx_underflow == 0);
-   ASSERT ( status.xosc_stable == 1);
+   RADIO_ASSERT ( status.rssi_valid == 0);
+   //RADIO_ASSERT ( status.lock == 0);
+   RADIO_ASSERT ( status.tx_active == 0);
+   //RADIO_ASSERT ( status.enc_busy == 0);
+   //RADIO_ASSERT ( status.tx_underflow == 0);
+   RADIO_ASSERT ( status.xosc_stable == 1);
 
    // we're idle now
    state = STATE_IDLE;
@@ -1240,7 +1254,7 @@ implementation{
    cc2520_status_t status;
 
    // reset the radio, initialize registers to default values
-   ASSERT(0);
+   RADIO_ASSERT(0);
 
    resetRadio();
    // start oscillator
@@ -1253,12 +1267,12 @@ implementation{
 
    // get status
    status = getStatus();
-   ASSERT ( status.rssi_valid == 0);
-   //ASSERT ( status.lock == 0);
-   ASSERT ( status.tx_active == 0);
-   //ASSERT ( status.enc_busy == 0);
-   //ASSERT ( status.tx_underflow == 0);
-   ASSERT ( status.xosc_stable == 1);
+   RADIO_ASSERT ( status.rssi_valid == 0);
+   //RADIO_ASSERT ( status.lock == 0);
+   RADIO_ASSERT ( status.tx_active == 0);
+   //RADIO_ASSERT ( status.enc_busy == 0);
+   //RADIO_ASSERT ( status.tx_underflow == 0);
+   RADIO_ASSERT ( status.xosc_stable == 1);
 
    // we're idle now
    state = STATE_IDLE;
@@ -1336,8 +1350,8 @@ implementation{
 
      call CSN.set();
 
-     ASSERT( call FIFOP.get() == 0 );
-     ASSERT( call FIFO.get() == 0 );
+     RADIO_ASSERT( call FIFOP.get() == 0 );
+     RADIO_ASSERT( call FIFO.get() == 0 );
 
      call SpiResource.release();
      call CSN.set();
@@ -1355,8 +1369,8 @@ implementation{
      // skip payload and rssi
      atomic readCrcOkAndLqiFromRxFifo(&crc_ok_lqi);
 
-     ASSERT( call FIFOP.get() == 0 );
-     ASSERT( call FIFO.get() == 0 );
+     RADIO_ASSERT( call FIFOP.get() == 0 );
+     RADIO_ASSERT( call FIFO.get() == 0 );
 
      call SpiResource.release();
      call CSN.set();
@@ -1375,8 +1389,8 @@ implementation{
      atomic readRssiFromRxFifo(&rssi);
      atomic readCrcOkAndLqiFromRxFifo(&crc_ok_lqi);
 
-     ASSERT( call FIFOP.get() == 0 );
-     ASSERT( call FIFO.get() == 0 );
+     RADIO_ASSERT( call FIFOP.get() == 0 );
+     RADIO_ASSERT( call FIFO.get() == 0 );
 
      call SpiResource.release();
      call CSN.set();
@@ -1398,8 +1412,8 @@ implementation{
      atomic recover_err();
      atomic flushRxFifo(); // JK
 
-     ASSERT( call FIFOP.get() == 0 );
-     ASSERT( call FIFO.get() == 0 );
+     RADIO_ASSERT( call FIFOP.get() == 0 );
+     RADIO_ASSERT( call FIFO.get() == 0 );
 
      call SpiResource.release();
      call CSN.set();
@@ -1425,7 +1439,7 @@ implementation{
      atomic recover_err();
      atomic flushRxFifo();
 
-     ASSERT( call FIFOP.get() == 0 );
+     RADIO_ASSERT( call FIFOP.get() == 0 );
 
      call SpiResource.release();
      call CSN.set();
@@ -1448,7 +1462,7 @@ implementation{
    /*******************************************/
 
    // if we're here, length must be correct
-   ASSERT(length >= 3 && length <= call RadioPacket.maxPayloadLength() + 2);
+   RADIO_ASSERT(length >= 3 && length <= call RadioPacket.maxPayloadLength() + 2);
 
    getHeader(rxMsg)->length = length;
 
@@ -1697,8 +1711,8 @@ implementation{
     //the state machine is getting stck at some point inthe disable
     //state
     
-    ASSERT( ! radioIrq );
-    ASSERT( state == STATE_RX_ON || state == STATE_TX_ON || state == STATE_BUSY_TX_2_RX_ON );
+    RADIO_ASSERT( ! radioIrq );
+    RADIO_ASSERT( state == STATE_RX_ON || state == STATE_TX_ON || state == STATE_BUSY_TX_2_RX_ON );
 
     radioIrq = TRUE;
     capturedTime = time;
@@ -1837,15 +1851,15 @@ implementation{
  }
 
  async command void RadioPacket.setPayloadLength(message_t* msg, uint8_t length){
-   ASSERT( 1 <= length && length <= 125 );
-   ASSERT( call RadioPacket.headerLength(msg) + length + call RadioPacket.metadataLength(msg) <= sizeof(message_t) );
+   RADIO_ASSERT( 1 <= length && length <= 125 );
+   RADIO_ASSERT( call RadioPacket.headerLength(msg) + length + call RadioPacket.metadataLength(msg) <= sizeof(message_t) );
 
    // we add the length of the CRC, which is automatically generated
    getHeader(msg)->length = length + 2;
  }
 
  async command uint8_t RadioPacket.maxPayloadLength(){
-   ASSERT( call Config.maxPayloadLength() - sizeof(cc2520_header_t) <= 125 );
+   RADIO_ASSERT( call Config.maxPayloadLength() - sizeof(cc2520_header_t) <= 125 );
 
    return call Config.maxPayloadLength() - sizeof(cc2520_header_t);
  }
@@ -1923,7 +1937,7 @@ implementation{
     async command void PacketTimeSyncOffset.set(message_t* msg, uint8_t value)
     {
         // we do not store the value, the time sync field is always the last 4 bytes
-        ASSERT( call PacketTimeSyncOffset.get(msg) == value );
+        RADIO_ASSERT( call PacketTimeSyncOffset.get(msg) == value );
 
         call TimeSyncFlag.set(msg);
     }

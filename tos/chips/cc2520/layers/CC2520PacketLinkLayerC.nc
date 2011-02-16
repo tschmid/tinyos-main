@@ -96,6 +96,6 @@ implementation {
 
   PacketLinkLayerP.DelayTimer -> DelayTimerC;
 
-  components LedsC;
-  PacketLinkLayerP.Leds -> LedsC;
+  //components LedsC;
+  //PacketLinkLayerP.Leds -> LedsC;
 }

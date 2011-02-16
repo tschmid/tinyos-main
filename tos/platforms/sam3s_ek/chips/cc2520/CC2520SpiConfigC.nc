@@ -36,32 +36,43 @@
  * @author Thomas Schmid
  */
 
-module CC2520SecurityP{
-  provides interface CC2520Security;
+module CC2520SpiConfigC 
+{
+    provides 
+    {
+        interface Init;
+        interface ResourceConfigure;
+    }
+    uses {
+        interface HplSam3SpiChipSelConfig;
+        interface HplSam3SpiConfig;
+    }
 }
-implementation{
+implementation {
 
-  norace uint8_t MODE, K_LENGTH;
-  norace uint32_t FRAMECOUNTER = 0;
-  uint8_t PKEY[16];
+    command error_t Init.init() {
+        // configure clock 
+        call HplSam3SpiChipSelConfig.setBaud(20);
+        call HplSam3SpiChipSelConfig.setClockPolarity(0); // logic zero is inactive 
+        call HplSam3SpiChipSelConfig.setClockPhase(1);    // out on rising, in on falling 
+        call HplSam3SpiChipSelConfig.disableAutoCS();     // disable automatic rising of CS after each transfer 
+        //call HplSam3SpiChipSelConfig.enableAutoCS(); 
+ 
+        // if the CS line is not risen automatically after the last tx. The lastxfer bit has to be used. 
+        call HplSam3SpiChipSelConfig.enableCSActive();    
+        //call HplSam3SpiChipSelConfig.disableCSActive();  
+ 
+        call HplSam3SpiChipSelConfig.setBitsPerTransfer(SPI_CSR_BITS_8); 
+        call HplSam3SpiChipSelConfig.setTxDelay(0); 
+        call HplSam3SpiChipSelConfig.setClkDelay(0); 
+        return SUCCESS;
+    }
 
-  async command uint8_t CC2520Security.getSecurityMode(){
-    return MODE;
-  }
-
-  command void CC2520Security.setSecurityMode(uint8_t mode){
-    atomic MODE = mode;
-  }
-
-  command void CC2520Security.setKey(uint8_t* pKey, uint8_t length){
-    memcpy(PKEY, pKey, length);
-  }
-
-  async command uint8_t* CC2520Security.getKey(){
-    return PKEY;
-  }
-
-  async command uint32_t CC2520Security.getFrameCounter(){
-    return FRAMECOUNTER++;
-  }
+    async command void ResourceConfigure.configure() {
+        // Do stuff here
+    }
+    
+    async command void ResourceConfigure.unconfigure() {
+        // Do stuff here...
+    }
 }

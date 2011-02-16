@@ -53,18 +53,18 @@ configuration CC2520SoftwareAckLayerC
 
 implementation
 {
-	components new SoftwareAckLayerP(), 
+	components new SoftwareAckLayerC(), 
 	           CC2520RadioAlarmC as RadioAlarmC, 
 	           new CC2520MetadataFlagC() as MetadataFlagC;
 
-	RadioSend = SoftwareAckLayerP;
-	RadioReceive = SoftwareAckLayerP;
-	SubSend = SoftwareAckLayerP;
-	SubReceive = SoftwareAckLayerP;
-	Config = SoftwareAckLayerP;
-	PacketAcknowledgements = SoftwareAckLayerP;
+	RadioSend = SoftwareAckLayerC;
+	RadioReceive = SoftwareAckLayerC;
+	SubSend = SoftwareAckLayerC;
+	SubReceive = SoftwareAckLayerC;
+	Config = SoftwareAckLayerC;
+	PacketAcknowledgements = SoftwareAckLayerC;
 
-	SoftwareAckLayerP.RadioAlarm -> RadioAlarmC.RadioAlarm[unique("RadioAlarm")];
-	SoftwareAckLayerP.AckReceivedFlag -> MetadataFlagC;
+	SoftwareAckLayerC.RadioAlarm -> RadioAlarmC.RadioAlarm[unique("RadioAlarm")];
+	SoftwareAckLayerC.AckReceivedFlag -> MetadataFlagC;
 
 }
