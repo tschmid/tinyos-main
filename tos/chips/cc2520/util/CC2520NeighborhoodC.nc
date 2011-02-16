@@ -40,7 +40,7 @@ configuration CC2520NeighborhoodC
 
 implementation
 {
-	components new NeighborhoodP(), MainC;
+	components NeighborhoodP, MainC;
 
 	Neighborhood = NeighborhoodP;
 	NeighborhoodFlag = NeighborhoodP;

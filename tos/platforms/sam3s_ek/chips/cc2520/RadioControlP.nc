@@ -36,32 +36,34 @@
  * @author Thomas Schmid
  */
 
-module CC2520SecurityP{
-  provides interface CC2520Security;
+module RadioControlP{
+  provides interface SplitControl as HighRadioControl;
+  uses interface SplitControl as LowRadioControl;
+  uses interface HplSam3TC as TC;
 }
 implementation{
-
-  norace uint8_t MODE, K_LENGTH;
-  norace uint32_t FRAMECOUNTER = 0;
-  uint8_t PKEY[16];
-
-  async command uint8_t CC2520Security.getSecurityMode(){
-    return MODE;
+  command error_t HighRadioControl.start(){
+    // start TC0
+    call TC.enableTC1();
+    return call LowRadioControl.start();
   }
 
-  command void CC2520Security.setSecurityMode(uint8_t mode){
-    atomic MODE = mode;
+  command error_t HighRadioControl.stop(){
+    // stop TC1 
+    call TC.disableTC1();
+    return call LowRadioControl.stop();
   }
 
-  command void CC2520Security.setKey(uint8_t* pKey, uint8_t length){
-    memcpy(PKEY, pKey, length);
+  event void LowRadioControl.startDone(error_t error){
+    signal HighRadioControl.startDone(error);
   }
 
-  async command uint8_t* CC2520Security.getKey(){
-    return PKEY;
+  event void LowRadioControl.stopDone(error_t error) {
+    signal HighRadioControl.stopDone(error);
   }
 
-  async command uint32_t CC2520Security.getFrameCounter(){
-    return FRAMECOUNTER++;
-  }
+  default event void HighRadioControl.startDone(error_t error) {}
+
+  default event void HighRadioControl.stopDone(error_t error) {}
+
 }
