@@ -134,8 +134,8 @@ implementation
 	DriverLayerP.DiagMsg -> DiagMsgC;
 #endif
 
-	components LedsC;
-	DriverLayerP.Leds -> LedsC;
+	components LedsC, NoLedsC;
+	DriverLayerP.Leds -> NoLedsC;
 
 #ifdef RADIO_DEBUG
   components LcdC;
