@@ -129,7 +129,7 @@ implementation
 
 	DriverLayerP.LocalTime-> HplC.LocalTimeRadio;
 
-#ifdef RADIO_DEBUG
+#ifdef RADIO_DEBUG_MESSAGES
 	components DiagMsgC;
 	DriverLayerP.DiagMsg -> DiagMsgC;
 #endif

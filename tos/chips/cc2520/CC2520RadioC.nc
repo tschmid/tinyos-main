@@ -88,7 +88,7 @@ implementation
 {
 	components CC2520RadioP, CC2520RadioAlarmC as RadioAlarmC;
 
-#ifdef RADIO_DEBUG
+#ifdef RADIO_DEBUG_MESSAGES
 	components AssertC;
 #endif
 
@@ -290,4 +290,6 @@ implementation
 	PacketLinkQuality = CC2520DriverLayerC.PacketLinkQuality;
 	PacketRSSI = CC2520DriverLayerC.PacketRSSI;
 	LocalTimeRadio = CC2520DriverLayerC;
+
+
 }

@@ -91,7 +91,7 @@ module CC2520DriverLayerP
     interface Tasklet;
     interface RadioAlarm;
 
-#ifdef RADIO_DEBUG
+#ifdef RADIO_DEBUG_MESSAGES
     interface DiagMsg;
 #endif
     interface Leds;
