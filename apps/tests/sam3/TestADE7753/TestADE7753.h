@@ -41,12 +41,15 @@
 #ifndef TESTADE7753_H
 #define TESTADE7753_H
 
+#define BUF_SIZE 10
+
 typedef nx_struct testade7753_msg {
   nx_uint16_t counter;
+  nx_uint32_t energy[BUF_SIZE];
 } testade7753_msg_t;
 
 enum {
-  AM_TESTADE7753_MSG = 6,
+  AM_TESTADE7753_MSG = 7,
 };
 
 #endif

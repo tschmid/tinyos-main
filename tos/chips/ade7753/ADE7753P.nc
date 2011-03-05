@@ -35,16 +35,20 @@
 
 module ADE7753P
 {
-  provides interface Init;
-  provides interface SplitControl;
-  provides interface ADE7753;
+  provides {
+    interface Init;
+    interface SplitControl;
+    interface ADE7753;
+  }
 
-  uses interface Resource;
+  uses {
+    interface Resource;
 
-  uses interface SpiPacket;
-  //  uses interface GpioInterrupt as InterruptAlert;
-  uses interface HplMsp430GeneralIO as SPIFRM;
-  uses interface Leds;
+    interface SpiPacket;
+    //  interface GpioInterrupt as InterruptAlert;
+    interface GeneralIO as SPIFRM;
+    interface Leds;
+  }
 }
 
 implementation {
@@ -175,7 +179,7 @@ implementation {
   }
 
   // Here I'm forcing 24 bit receive data
-  command error_t ADE7753.getReg(uint8_t regAddr, uint8_t len) {
+  async command error_t ADE7753.getReg(uint8_t regAddr, uint8_t len) {
     error_t error = SUCCESS;
 
     atomic {
@@ -224,7 +228,7 @@ implementation {
 
 
   // here I'm forcing 24bit of val during a write
-  command error_t ADE7753.setReg(uint8_t regAddr, uint8_t len, uint32_t val) {
+  async command error_t ADE7753.setReg(uint8_t regAddr, uint8_t len, uint32_t val) {
     // here I'm forcing 8bit of val during a write
     // command error_t ADE7753.setReg(uint8_t regAddr, uint8_t val) {
     error_t error = SUCCESS;
@@ -247,24 +251,27 @@ implementation {
 
     // call Leds.led0On();
 
-    mSPITxBuf[0] = regAddr | (1 << 7); // set the WRITE bit
+    atomic
+    {
+      mSPITxBuf[0] = regAddr | (1 << 7); // set the WRITE bit
 
-    switch (len) {
-      case 2:
-        mSPITxBuf[1] = (uint8_t) val;
-        break;
-      case 3:
-        mSPITxBuf[1] = (uint8_t) (val>>8);
-        mSPITxBuf[2] = (uint8_t) val;
-        break;
-      case 4:
-        mSPITxBuf[1] = (uint8_t) (val>>16);
-        mSPITxBuf[2] = (uint8_t) (val>>8);
-        mSPITxBuf[3] = (uint8_t) val;
-        break;
+      switch (len) {
+        case 2:
+          mSPITxBuf[1] = (uint8_t) val;
+          break;
+        case 3:
+          mSPITxBuf[1] = (uint8_t) (val>>8);
+          mSPITxBuf[2] = (uint8_t) val;
+          break;
+        case 4:
+          mSPITxBuf[1] = (uint8_t) (val>>16);
+          mSPITxBuf[2] = (uint8_t) (val>>8);
+          mSPITxBuf[3] = (uint8_t) val;
+          break;
+      }
+
+      mSPITxLen = len;
     }
-
-    mSPITxLen = len;
 
     //	call Leds.led0On();
 
