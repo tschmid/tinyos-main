@@ -34,50 +34,45 @@
  *
  *
  * @author Thomas Schmid
- * @date   March 2011
  */
- 
-#include "TestADE7753.h"
 
-configuration TestADE7753AppC {}
-implementation {
-  components MainC, TestADE7753C as App, LedsC;
-  components new AMSenderC(AM_TESTADE7753_MSG);
-  components new AMReceiverC(AM_TESTADE7753_MSG);
-  components new TimerMilliC();
-  components ActiveMessageC;
-  
-  App.Boot -> MainC.Boot;
-  
-  App.Receive -> AMReceiverC;
-  App.AMSend -> AMSenderC;
-  App.AMControl -> ActiveMessageC;
-  App.Leds -> LedsC;
-  App.MilliTimer -> TimerMilliC;
-  App.Packet -> AMSenderC;
-
-  components new Sam3Spi3C() as SpiC;
-  components ACMeterC as Meter;
-
-  Meter.SpiPacket -> SpiC;
-  Meter.SpiResource -> SpiC;
-
-  components SpiConfigC;
-  SpiConfigC.Init <- SpiC;
-  SpiConfigC.ResourceConfigure <- SpiC;
-  SpiConfigC.HplSam3SpiChipSelConfig -> SpiC;
-
-  components HplSam3sGeneralIOC as IO;
-
-  Meter.CSN -> IO.PioA22;
-  Meter.RelayIO -> IO.PioA23;
-
-  App.MeterControl -> Meter;
-  App.ReadEnergy -> Meter;
-  App.RelayConfig -> Meter;
-  App.GainConfig -> Meter;
-  App.GetPeriod32 -> Meter;
-
+module SpiConfigC 
+{
+    provides 
+    {
+        interface Init;
+        interface ResourceConfigure;
+    }
+    uses {
+        interface HplSam3SpiChipSelConfig;
+        interface HplSam3SpiConfig;
+    }
 }
+implementation {
 
+    command error_t Init.init() {
+        // configure clock 
+        call HplSam3SpiChipSelConfig.setBaud(20);
+        call HplSam3SpiChipSelConfig.setClockPolarity(0); // logic zero is inactive 
+        call HplSam3SpiChipSelConfig.setClockPhase(1);    // out on rising, in on falling 
+        call HplSam3SpiChipSelConfig.disableAutoCS();     // disable automatic rising of CS after each transfer 
+        //call HplSam3SpiChipSelConfig.enableAutoCS(); 
+ 
+        // if the CS line is not risen automatically after the last tx. The lastxfer bit has to be used. 
+        call HplSam3SpiChipSelConfig.enableCSActive();    
+        //call HplSam3SpiChipSelConfig.disableCSActive();  
+ 
+        call HplSam3SpiChipSelConfig.setBitsPerTransfer(SPI_CSR_BITS_8); 
+        call HplSam3SpiChipSelConfig.setTxDelay(0); 
+        call HplSam3SpiChipSelConfig.setClkDelay(0); 
+        return SUCCESS;
+    }
 
+    async command void ResourceConfigure.configure() {
+        // Do stuff here
+    }
+    
+    async command void ResourceConfigure.unconfigure() {
+        // Do stuff here...
+    }
+}

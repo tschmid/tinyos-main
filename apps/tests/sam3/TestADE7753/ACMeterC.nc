@@ -33,7 +33,9 @@
 
 /**
  * AC Mote and Energy Meter using ADE7753
- * @ Fred Jiang <fxjiang@eecs.berkeley.edu>
+ *
+ * @author Fred Jiang <fxjiang@eecs.berkeley.edu>
+ * @author Thomas Schmid (generalized module)
  */
 
 configuration ACMeterC {
@@ -44,14 +46,20 @@ configuration ACMeterC {
     interface GetSet<uint8_t> as GainConfig;
     interface Get<uint32_t> as GetPeriod32;
   }
+  uses {
+    interface SpiPacket;
+    interface Resource as SpiResource;
+
+    interface GeneralIO as CSN;
+
+    interface GeneralIO as RelayIO;
+  }
 }
 
 implementation {
   components MainC;
   components ACMeterM, ADE7753P, LedsC;
-  components new Alarm32khz32C() as SampleAlarmC;
-  components new Msp430Spi1C() as SpiC;
-  components HplMsp430GeneralIOC;
+  components new AlarmMilliC() as SampleAlarmC;
 
   SplitControl = ACMeterM;
   ReadEnergy = ACMeterM;
@@ -64,9 +72,13 @@ implementation {
   ACMeterM.ADE7753 -> ADE7753P;
   ACMeterM.MeterControl -> ADE7753P;
   ACMeterM.SampleAlarm -> SampleAlarmC;
-  ACMeterM.onoff -> HplMsp430GeneralIOC.Port21;
-  ADE7753P.SpiPacket -> SpiC;
-  ADE7753P.SPIFRM -> HplMsp430GeneralIOC.Port54;
+
+  RelayIO = ACMeterM.onoff;
+
+  SpiPacket = ADE7753P.SpiPacket;
+
+  CSN = ADE7753P.SPIFRM;
+
   ADE7753P.Leds -> LedsC;
-  ADE7753P.Resource -> SpiC;
+  SpiResource = ADE7753P.Resource;
 }

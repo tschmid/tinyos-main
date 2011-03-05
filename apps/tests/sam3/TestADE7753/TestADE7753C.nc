@@ -36,9 +36,10 @@
  * @author Thomas Schmid
  * @date   March 2011
  */
- 
+
 #include "Timer.h"
 #include "TestADE7753.h"
+#include "ACMeter.h"
 
 module TestADE7753C @safe() {
   uses {
@@ -49,6 +50,12 @@ module TestADE7753C @safe() {
     interface Timer<TMilli> as MilliTimer;
     interface SplitControl as AMControl;
     interface Packet;
+
+    interface SplitControl as MeterControl;
+    interface ReadStream<uint32_t> as ReadEnergy;
+    interface GetSet<acmeter_state_t> as RelayConfig;
+    interface GetSet<uint8_t> as GainConfig;
+    interface Get<uint32_t> as GetPeriod32;
   }
 }
 implementation {
@@ -57,68 +64,77 @@ implementation {
 
   bool locked;
   uint16_t counter = 0;
-  
+
+  uint32_t energyBuffer1[BUF_SIZE];
+  uint32_t energyBuffer2[BUF_SIZE];
+  uint32_t *currBuffer;
+
   event void Boot.booted() {
     call AMControl.start();
+    call MeterControl.start();
   }
 
   event void AMControl.startDone(error_t err) {
-    if (err == SUCCESS) {
-      call MilliTimer.startPeriodic(4*250);
-    }
-    else {
-      call AMControl.start();
-    }
+    // do nothing
+    /*
+       if (err == SUCCESS) {
+       call MilliTimer.startPeriodic(4*250);
+       }
+       else {
+       call AMControl.start();
+       }
+       */
+  }
+
+  event void MeterControl.startDone(error_t err) {
+    // setup the buffers
+    call ReadEnergy.postBuffer(energyBuffer1, BUF_SIZE);
+    call ReadEnergy.postBuffer(energyBuffer2, BUF_SIZE);
+    // setup the current buffer
+    currBuffer = energyBuffer1;
+    // start reading energy in 1s intervals
+    call ReadEnergy.read(1000000);
   }
 
   event void AMControl.stopDone(error_t err) {
     // do nothing
   }
-  
+
+  event void MeterControl.stopDone(error_t err) {
+    // do nothing
+  }
+
   event void MilliTimer.fired() {
+  }
+
+  task void sendData() {
     counter++;
-    dbg("TestADE7753C", "TestADE7753C: timer fired, counter is %hu.\n", counter);
     if (locked) {
       return;
     }
     else {
       testade7753_msg_t* rcm = (testade7753_msg_t*)call Packet.getPayload(&packet, sizeof(testade7753_msg_t));
       if (rcm == NULL) {
-	return;
+        return;
       }
 
+      memcpy(rcm->energy, currBuffer, BUF_SIZE);
+      // post the buffer again
+      call ReadEnergy.postBuffer(currBuffer, BUF_SIZE);
       rcm->counter = counter;
       if (call AMSend.send(AM_BROADCAST_ADDR, &packet, sizeof(testade7753_msg_t)) == SUCCESS) {
-	dbg("TestADE7753C", "TestADE7753C: packet sent.\n", counter);	
-	locked = TRUE;
+        dbg("TestADE7753C", "TestADE7753C: packet sent.\n", counter);	
+        locked = TRUE;
       }
     }
   }
 
   event message_t* Receive.receive(message_t* bufPtr, 
-				   void* payload, uint8_t len) {
+      void* payload, uint8_t len) {
     dbg("TestADE7753C", "TestADE7753 packet of length %hhu.\n", len);
     if (len != sizeof(testade7753_msg_t)) {return bufPtr;}
     else {
-      testade7753_msg_t* rcm = (testade7753_msg_t*)payload;
-      if (rcm->counter & 0x1) {
-	call Leds.led0On();
-      }
-      else {
-	call Leds.led0Off();
-      }
-      if (rcm->counter & 0x2) {
-	call Leds.led1On();
-      }
-      else {
-	call Leds.led1Off();
-      }
-      if (rcm->counter & 0x4) {
-	call Leds.led2On();
-      }
-      else {
-	call Leds.led2Off();
-      }
+      //testade7753_msg_t* rcm = (testade7753_msg_t*)payload;
       return bufPtr;
     }
   }
@@ -128,6 +144,21 @@ implementation {
       locked = FALSE;
     }
   }
+
+  event void ReadEnergy.bufferDone(error_t result,
+      uint32_t* buf, uint16_t count) {
+    // do something with the buffer here
+    call Leds.led0Toggle();
+    currBuffer = buf;
+    post sendData();
+
+  }
+
+  event void ReadEnergy.readDone(error_t result, uint32_t usActualPeriod) {
+
+    // we should never get here... it would be really bad as we loose samples!
+  }
+
 
 }
 

@@ -33,7 +33,9 @@
 
 /**
  * AC Mote and Energy Meter using ADE7753
+ *
  * @author Fred Jiang <fxjiang@eecs.berkeley.edu>
+ * @author Thomas Schmid (generalized module)
  */
 
 #include <Timer.h>
@@ -42,18 +44,24 @@
 #include "ACMeter.h"
 
 module ACMeterM {
-  provides interface SplitControl;
-  provides interface ReadStream<uint32_t> as ReadEnergy;
-  provides interface GetSet<acmeter_state_t> as RelayConfig;
-  provides interface GetSet<uint8_t> as GainConfig;
-  provides interface Get<uint32_t> as GetPeriod32;
+  provides {
+    interface SplitControl;
+    interface ReadStream<uint32_t> as ReadEnergy;
+    interface GetSet<acmeter_state_t> as RelayConfig;
+    interface GetSet<uint8_t> as GainConfig;
+    interface Get<uint32_t> as GetPeriod32;
+  }
 
-  uses interface Alarm<T32khz, uint32_t> as SampleAlarm;
-  uses interface Leds;
-  uses interface ADE7753;
-  uses interface SplitControl as MeterControl;
-  uses interface HplMsp430GeneralIO as onoff;
-} implementation {
+  uses {
+    interface Alarm<TMilli, uint32_t> as SampleAlarm;
+    interface Leds;
+    interface ADE7753;
+    interface SplitControl as MeterControl;
+    interface GeneralIO as onoff;
+  }
+} 
+
+implementation {
 
   acmeter_state_t onoff_state;
   uint32_t m_gain = ADE7753_GAIN_VAL;
@@ -67,7 +75,7 @@ module ACMeterM {
 
   task void setReg();
 
-  enum {
+  norace enum {
     OFF,
     INIT,
     SET_MODE,
@@ -96,10 +104,13 @@ module ACMeterM {
 
     call ADE7753.setReg(ADE7753_MODE, 3, ADE7753_MODE_VAL);
 
-    current_buffer = NULL;
-    deliver_buffer = NULL;
-    extra_buffers = NULL;
-    current_buffer_size = current_buffer_idx = 0;
+    atomic
+    {
+      current_buffer = NULL;
+      deliver_buffer = NULL;
+      extra_buffers = NULL;
+      current_buffer_size = current_buffer_idx = 0;
+    }
 
     return SUCCESS;
   }
@@ -161,8 +172,12 @@ module ACMeterM {
         return EBUSY;
       stage = SAMPLING;
 
+      /*
       // convert us to 32khz tics without overflow, and set the first reading
       m_period = (usPeriod / 30) - (usPeriod / 1769);
+      */
+      // convert us to TMilli tics without overflow, and set the first reading
+      m_period = (usPeriod / 1000);
       m_last = call SampleAlarm.getNow();
       call SampleAlarm.startAt(m_last, m_period);
     }
