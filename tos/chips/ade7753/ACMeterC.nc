@@ -44,7 +44,7 @@ configuration ACMeterC {
     interface ReadStream<uint32_t> as ReadEnergy;
     interface GetSet<acmeter_state_t> as RelayConfig;
     interface GetSet<uint8_t> as GainConfig;
-    interface Get<uint32_t> as GetPeriod32;
+    interface Get<uint32_t> as GetPeriod;
   }
   uses {
     interface SpiPacket;
@@ -58,22 +58,22 @@ configuration ACMeterC {
 
 implementation {
   components MainC;
-  components ACMeterM, ADE7753P, LedsC;
+  components ACMeterP, ADE7753P, LedsC;
   components new AlarmMilliC() as SampleAlarmC;
 
-  SplitControl = ACMeterM;
-  ReadEnergy = ACMeterM;
-  RelayConfig = ACMeterM;
-  GainConfig = ACMeterM;
-  GetPeriod32 = ACMeterM;
+  SplitControl = ACMeterP;
+  ReadEnergy = ACMeterP;
+  RelayConfig = ACMeterP;
+  GainConfig = ACMeterP;
+  GetPeriod = ACMeterP;
 
   MainC.SoftwareInit -> ADE7753P.Init;	
-  ACMeterM.Leds -> LedsC;
-  ACMeterM.ADE7753 -> ADE7753P;
-  ACMeterM.MeterControl -> ADE7753P;
-  ACMeterM.SampleAlarm -> SampleAlarmC;
+  ACMeterP.Leds -> LedsC;
+  ACMeterP.ADE7753 -> ADE7753P;
+  ACMeterP.MeterControl -> ADE7753P;
+  ACMeterP.SampleAlarm -> SampleAlarmC;
 
-  RelayIO = ACMeterM.onoff;
+  RelayIO = ACMeterP.onoff;
 
   SpiPacket = ADE7753P.SpiPacket;
 

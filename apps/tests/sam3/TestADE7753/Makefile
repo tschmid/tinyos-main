@@ -1,6 +1,6 @@
 COMPONENT=TestADE7753AppC
 BUILD_EXTRA_DEPS = TestADE7753Msg.py TestADE7753Msg.class
-CLEAN_EXTRA = TestADE7753Msg.py TestADE7753Msg.class TestADE7753Msg.java
+CLEAN_EXTRA = TestADE7753Msg.py TestADE7753Msg.class TestADE7753Msg.java *.pyc
 
 TestADE7753Msg.py: TestADE7753.h
 	mig python -target=$(PLATFORM) $(CFLAGS) -python-classname=TestADE7753Msg TestADE7753.h testade7753_msg -o $@

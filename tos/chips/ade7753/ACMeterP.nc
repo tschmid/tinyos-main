@@ -43,13 +43,13 @@
 
 #include "ACMeter.h"
 
-module ACMeterM {
+module ACMeterP {
   provides {
     interface SplitControl;
     interface ReadStream<uint32_t> as ReadEnergy;
     interface GetSet<acmeter_state_t> as RelayConfig;
     interface GetSet<uint8_t> as GainConfig;
-    interface Get<uint32_t> as GetPeriod32;
+    interface Get<uint32_t> as GetPeriod;
   }
 
   uses {
@@ -161,7 +161,7 @@ implementation {
 
   /******* Energy Reading **********/
 
-  command uint32_t GetPeriod32.get() {
+  command uint32_t GetPeriod.get() {
     return m_period;
   }
 
@@ -197,8 +197,7 @@ implementation {
   }
 
   task void readDone_task() {
-    // TODO : convert to uSeconds
-    signal ReadEnergy.readDone(SUCCESS, m_period);
+    signal ReadEnergy.readDone(SUCCESS, 1000*m_period);
   }
 
   task void bufferDone_task() {
