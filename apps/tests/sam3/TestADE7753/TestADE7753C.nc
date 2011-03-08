@@ -75,18 +75,9 @@ implementation {
   }
 
   event void AMControl.startDone(error_t err) {
-    // do nothing
-    /*
-       if (err == SUCCESS) {
-       call MilliTimer.startPeriodic(4*250);
-       }
-       else {
-       call AMControl.start();
-       }
-       */
   }
 
-  event void MeterControl.startDone(error_t err) {
+  void readEnergy() {
     // setup the buffers
     call ReadEnergy.postBuffer(energyBuffer1, BUF_SIZE);
     call ReadEnergy.postBuffer(energyBuffer2, BUF_SIZE);
@@ -94,6 +85,10 @@ implementation {
     currBuffer = energyBuffer1;
     // start reading energy in 1s intervals
     call ReadEnergy.read(1000000);
+  }
+
+  event void MeterControl.startDone(error_t err) {
+    readEnergy();
   }
 
   event void AMControl.stopDone(error_t err) {
@@ -108,6 +103,8 @@ implementation {
   }
 
   task void sendData() {
+    uint8_t i;
+
     counter++;
     if (locked) {
       return;
@@ -118,7 +115,10 @@ implementation {
         return;
       }
 
-      memcpy(rcm->energy, currBuffer, BUF_SIZE);
+      // we can't do a memcopy because it's a newtork type!
+      for(i=0; i<BUF_SIZE; i++)
+        rcm->energy[i] = (int32_t)currBuffer[i];
+
       // post the buffer again
       call ReadEnergy.postBuffer(currBuffer, BUF_SIZE);
       rcm->counter = counter;
@@ -155,13 +155,9 @@ implementation {
   }
 
   event void ReadEnergy.readDone(error_t result, uint32_t usActualPeriod) {
-
     // we should never get here... it would be really bad as we loose samples!
+    // Just in case, start energy reading again.
+    readEnergy();
   }
 
-
 }
-
-
-
-

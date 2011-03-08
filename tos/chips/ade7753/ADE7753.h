@@ -52,7 +52,7 @@
 // #define ADE7753_GAIN_VAL        0x24
 // Try 0011 for CH1 gain
 // #define ADE7753_GAIN_VAL        0x22
-#define ADE7753_GAIN_VAL        0x24
+#define ADE7753_GAIN_VAL        0x21
 
 
 // MSB enabled for no-creep
