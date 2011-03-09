@@ -41,6 +41,8 @@
 #include <Timer.h>
 #include <ADE7753.h>
 
+#include <Assert.h>
+
 #include "ACMeter.h"
 
 module ACMeterP {
@@ -64,8 +66,9 @@ module ACMeterP {
 implementation {
 
   acmeter_state_t onoff_state;
-  uint32_t m_gain = ADE7753_GAIN_VAL;
+  norace uint32_t m_gain;
   uint32_t m_period, m_last;
+  norace uint16_t m_mode;
   bool dirty;
 
   uint32_t *current_buffer, *deliver_buffer;
@@ -73,36 +76,79 @@ implementation {
   uint16_t  current_buffer_idx;
   struct acmeter_buffer *extra_buffers = NULL;
 
-  task void setReg();
-
   norace enum {
     OFF,
     INIT,
+    ON,
+  } state = OFF;
+
+  norace enum {
     SET_MODE,
     SET_GAIN,
-    ON,
-    SAMPLING,
-  } stage = OFF;
+    DONE,
+  } initState = SET_MODE;
 
   task void signalStartDone() {
     signal SplitControl.startDone(SUCCESS);
   }
 
+  // this state machine drives the initialization
+  task void init_task() {
+    ASSERT(state == INIT);
+
+    switch(initState) {
+      case SET_MODE:
+        call Leds.led2On();
+        m_mode = (1<<ADE7753_MODE_POAM) | 
+                 (1<<ADE7753_MODE_DISCF) | 
+                 (1<<ADE7753_MODE_DISSAG);
+        initState = SET_GAIN;
+        call ADE7753.setReg(ADE7753_MODE, 3, m_mode);
+        break;
+
+      case SET_GAIN:
+        call Leds.led2Off();
+        call Leds.led1On();
+        m_gain = (ADE7753_GAIN_2        << ADE7753_GAIN_PGA_CH1) |
+                 (ADE7753_GAIN_2        << ADE7753_GAIN_PGA_CH2) |
+                 (ADE7753_GAIN_SCALE_05 << ADE7753_GAIN_SCALE_CH1);
+        initState = DONE;
+        call ADE7753.setReg(ADE7753_GAIN, 2, m_gain);
+        break;
+
+      case DONE:
+        call Leds.led1Off();
+        call Leds.led0On();
+        state = ON;
+        post signalStartDone();
+        break;
+
+      default:
+        ASSERT(1);
+    }
+
+  }
+
   command error_t SplitControl.start() {
-    if (stage != OFF) {
+    if (state != OFF) {
       return EALREADY;
     }
 
     atomic {
       onoff_state = ACMETER_ON;
-      stage = SET_MODE;
+      state = INIT;
+      initState = SET_MODE;
     }
 
     call onoff.makeOutput();
     call onoff.set();
     call MeterControl.start();
 
-    call ADE7753.setReg(ADE7753_MODE, 3, ADE7753_MODE_VAL);
+    return SUCCESS;
+  }
+
+  event void MeterControl.startDone(error_t err) {
+    post init_task();
 
     atomic
     {
@@ -112,15 +158,10 @@ implementation {
       current_buffer_size = current_buffer_idx = 0;
     }
 
-    return SUCCESS;
-  }
-
-  event void MeterControl.startDone(error_t err) {
-
   }
 
   event void MeterControl.stopDone(error_t err) {
-
+    signal SplitControl.stopDone(err);
   }
 
   command error_t SplitControl.stop() {
@@ -131,18 +172,18 @@ implementation {
     call SampleAlarm.stop();
     call MeterControl.stop();
 
-    stage = OFF;
+    state = OFF;
   }
 
 
   /******* Relay config **********/  
-  command void RelayConfig.set(acmeter_state_t state) {
-    if (state == ACMETER_ON) {
+  command void RelayConfig.set(acmeter_state_t acState) {
+    if (acState == ACMETER_ON) {
       call onoff.set();
     } else {
       call onoff.clr();
     }
-    onoff_state = state;
+    onoff_state = acState;
   }
 
   command acmeter_state_t RelayConfig.get() {
@@ -168,14 +209,9 @@ implementation {
   /* code for buffered reading  */
   command error_t ReadEnergy.read(uint32_t usPeriod) {
     atomic {
-      if (stage != ON || (call SampleAlarm.isRunning())) 
+      if (call SampleAlarm.isRunning()) 
         return EBUSY;
-      stage = SAMPLING;
 
-      /*
-      // convert us to 32khz tics without overflow, and set the first reading
-      m_period = (usPeriod / 30) - (usPeriod / 1769);
-      */
       // convert us to TMilli tics without overflow, and set the first reading
       m_period = (usPeriod / 1000);
       m_last = call SampleAlarm.getNow();
@@ -208,12 +244,9 @@ implementation {
     }
   }
 
-  async event void ADE7753.getRegDone( error_t error, uint8_t regAddr, uint32_t val, uint16_t len) {
-
-    if (stage != SAMPLING) return;
+  void readRAEnergy(uint32_t val) {
     atomic {
       if (current_buffer == NULL) {
-        stage = ON;
         post readDone_task();
         call SampleAlarm.stop();
       } else {
@@ -246,10 +279,28 @@ implementation {
     }
   }
 
+  async event void ADE7753.getRegDone( error_t error, uint8_t regAddr, uint32_t val, uint16_t len) {
+
+    if (state == INIT) {
+      post init_task();
+      return;
+    }
+
+    ASSERT(state == ON);
+
+    switch(regAddr) {
+      case ADE7753_RAENERGY:
+        readRAEnergy(val);
+        break;
+
+      default:
+        ASSERT(1);
+    }
+  }
+
   /* adding buffers */
   command error_t ReadEnergy.postBuffer(uint32_t *buf, uint16_t count) {
     atomic {
-
       if (current_buffer == NULL) {
         current_buffer = buf;
         current_buffer_size = count;
@@ -267,22 +318,17 @@ implementation {
     return SUCCESS;
   }
 
-  task void setReg() {
-    call ADE7753.setReg(ADE7753_GAIN, 2, m_gain);
-  }
-
   async event void ADE7753.setRegDone( error_t error, uint8_t regAddr, uint32_t val, uint16_t len) {
-    switch (stage) {
-      case SET_MODE:
-        atomic stage = SET_GAIN;
-        post setReg();
-        return;
-      case SET_GAIN:
-        atomic stage = ON;
-        post signalStartDone();
-        return;
+    if (state == INIT) {
+      post init_task();
+      return;
+    }
+
+    ASSERT(state == ON);
+
+    switch (regAddr) {
       default:
-        return;
+        ASSERT(1);
     }
   }
 

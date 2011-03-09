@@ -45,7 +45,6 @@ module ADE7753P
     interface Resource;
 
     interface SpiPacket;
-    //  interface GpioInterrupt as InterruptAlert;
     interface GeneralIO as SPIFRM;
     interface Leds;
   }
@@ -73,18 +72,16 @@ implementation {
   norace error_t mSSError;
 
 
-  /*
-     task void StartDone() {
-     atomic mState = STATE_IDLE;
-     signal SplitControl.startDone(SUCCESS);
-     return;
-     }
+  task void StartDone() {
+    atomic mState = STATE_IDLE;
+    signal SplitControl.startDone(SUCCESS);
+    return;
+  }
 
-     task void StopDone() {
-     signal SplitControl.stopDone(mSSError);
-     return;
-     }
-   */
+  task void StopDone() {
+    signal SplitControl.stopDone(mSSError);
+    return;
+  }
 
   command error_t Init.init() {
     atomic {
@@ -101,10 +98,8 @@ implementation {
 
   command error_t SplitControl.start() {
     error_t error = SUCCESS;
-    //	atomic lock = FALSE;
     atomic {
       if (mState == STATE_STOPPED) { 
-        // mState = STATE_STARTING;
         mState = STATE_IDLE;
       }
       else {
@@ -114,17 +109,10 @@ implementation {
     if (error) 
       return error;
 
-    /* set initialization register values here
-       mSPITxBuf[0] = LIS3L02DQ_CTRL_REG1;
-       mSPITxBuf[1] = 0;
-       mSPITxBuf[1] = (LIS3L01DQ_CTRL_REG1_PD(1) | LIS3L01DQ_CTRL_REG1_XEN | LIS3L01DQ_CTRL_REG1_YEN | LIS3L01DQ_CTRL_REG1_ZEN);
-       call SPIFRM.clr(); // CS LOW
-       error = call SpiPacket.send(mSPITxBuf,mSPIRxBuf,2);
-     */
     atomic mState = STATE_IDLE;
     call SPIFRM.set();
 
-    signal SplitControl.startDone(SUCCESS);
+    post StartDone();
     return error;
   }
 
@@ -144,17 +132,10 @@ implementation {
     if (error)
       return error;
 
-    /* stopping conditions
-       mSPITxBuf[0] = LIS3L02DQ_CTRL_REG1;
-       mSPITxBuf[1] = 0;
-       mSPITxBuf[1] = (LIS3L01DQ_CTRL_REG1_PD(0));
-       call SPIFRM.clr(); // CS LOW
-       error = call SpiPacket.send(mSPITxBuf,mSPIRxBuf,2);
-     */
     atomic mState = STATE_STOPPED;	
     call SPIFRM.set();
 
-    signal SplitControl.stopDone(mSSError);	
+    post StopDone();
     return error;
   }
 
@@ -190,14 +171,6 @@ implementation {
       }
     }
 
-    /*
-    //if((regAddr < 0x16) || (regAddr > 0x2F)) {
-    if(regAddr > 0x3F) {
-    error = EINVAL;
-    return error;
-    }
-     */
-
     mSPITxBuf[0] = regAddr;
     mSPITxBuf[1] = 0;
     mSPITxBuf[2] = 0;
@@ -210,17 +183,7 @@ implementation {
 
     mSPIRxLen = len;
 
-    //	atomic mState = STATE_GETREG;
-
     call Resource.request();
-
-    /*
-       call SPIFRM.clr(); // CS LOW
-
-       error = call SpiPacket.send(mSPITxBuf,mSPIRxBuf,4);
-    // call Leds.led0On();
-
-     */
 
     return error;
 
@@ -229,8 +192,6 @@ implementation {
 
   // here I'm forcing 24bit of val during a write
   async command error_t ADE7753.setReg(uint8_t regAddr, uint8_t len, uint32_t val) {
-    // here I'm forcing 8bit of val during a write
-    // command error_t ADE7753.setReg(uint8_t regAddr, uint8_t val) {
     error_t error = SUCCESS;
 
     atomic {
@@ -240,14 +201,6 @@ implementation {
         mState = STATE_SETREG;
       }
     }
-
-    // if((regAddr < 0x16) || (regAddr > 0x2F)) {
-    /*
-       if(regAddr > 0x3F) {
-       error = EINVAL;
-       return error;
-       }
-     */
 
     // call Leds.led0On();
 
@@ -275,13 +228,7 @@ implementation {
 
     //	call Leds.led0On();
 
-    //	atomic mState = STATE_SETREG;
-
     call Resource.request();
-    /*
-       call SPIFRM.clr(); // CS LOW
-       error = call SpiPacket.send(mSPITxBuf,mSPIRxBuf,2);	
-     */
     return error;
   }
 
@@ -290,22 +237,13 @@ implementation {
     uint32_t val;
     error_t error = spi_error;
 
-    //	  if (spi_error == FAIL)
-    //		  call Leds.led0Toggle();
-    //	  call Leds.led1On();
-
     call SPIFRM.set(); // CS HIGH
 
     atomic {
       switch (mState) {
         case STATE_GETREG:
           mState = STATE_IDLE;
-          //call Leds.led0Toggle();
           // repack
-
-          //		if (mSPIRxLen != len)
-          //			call Leds.led0Toggle();
-
           switch (len) {
             case 2:
               val = rxBuf[1];
@@ -321,17 +259,12 @@ implementation {
               break;
           }
           signal ADE7753.getRegDone(error, (txBuf[0] & 0x7F), val, len);
-          // signal ADE7753.getRegDone(error, (txBuf[0] & 0x7F) , *(uint32_t*)rxBuf & 0xFFFFFF);
           break;
         case STATE_SETREG:
 
           //		call Leds.led1Toggle();
 
           mState = STATE_IDLE;
-
-          //		if (mSPITxLen != len)
-          //			call Leds.led1Toggle();
-
 
           // repack
           switch (len) {
@@ -350,16 +283,6 @@ implementation {
           }		
           signal ADE7753.setRegDone(error, (txBuf[0] & 0x7F), val, len);
           break;
-          /*
-             case STATE_STARTING:
-             mState = STATE_IDLE;
-             call SPIFRM.set();
-             post StartDone();
-             break;
-             case STATE_STOPPING:
-             mState = STATE_STOPPED;
-             post StopDone();
-           */
         default:
           mState = STATE_IDLE;
           break;
@@ -370,19 +293,7 @@ implementation {
     return;
   }
 
-  /*
-     async event void InterruptAlert.fired() {
-  // This alert is decoupled from whatever state the MAX136x is in. 
-  // Upper layers must handle dealing with this alert appropriately.
-  signal ADE7753.alertThreshold();
-  return;
-  }
-   */
-
   default event void SplitControl.startDone( error_t error ) { return; }
   default event void SplitControl.stopDone( error_t error ) { return; }
-
-
-  // default async event void ADE7753.alertThreshold(){ return; }
 
 }
