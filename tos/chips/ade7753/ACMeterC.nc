@@ -57,6 +57,9 @@ configuration ACMeterC {
 }
 
 implementation {
+#ifdef DEBUG_ADE7753
+  components DiagMsgC;
+#endif
   components MainC;
   components ACMeterP, ADE7753P, LedsC;
   components new AlarmMilliC() as SampleAlarmC;
@@ -81,4 +84,5 @@ implementation {
 
   ADE7753P.Leds -> LedsC;
   SpiResource = ADE7753P.Resource;
+
 }

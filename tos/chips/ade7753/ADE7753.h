@@ -36,25 +36,97 @@
  * @author Fred Jiang <fxjiang@eecs.berkeley.edu>
  */
 
-
+#ifndef __ADE7753_H__
+#define __ADE7753_H__
 
 // Register addresses
-#define ADE7753_GAIN            0x0F
-#define ADE7753_AENERGY         0x02
-#define ADE7753_RAENERGY        0x03
-#define ADE7753_MODE            0x09
-#define ADE7753_IRMS            0x16
+#define ADE7753_WAVEFORM   0x01
+#define ADE7753_AENERGY    0x02
+#define ADE7753_RAENERGY   0x03
+#define ADE7753_LAENERGY   0x04
+#define ADE7753_VAENERGY   0x05
+#define ADE7753_RVAENERGY  0x06
+#define ADE7753_LVAENERGY  0x07
+#define ADE7753_LVARENERGY 0x08
+#define ADE7753_MODE       0x09
+#define ADE7753_IRQEN      0x0A 
+#define ADE7753_STATUS     0x0B
+#define ADE7753_RSTATUS    0x0C
+#define ADE7753_CH1OS      0x0D
+#define ADE7753_CH2OS      0x0E
+#define ADE7753_GAIN       0x0F
+#define ADE7753_PHCAL      0x10
+#define ADE7753_APOS       0x11
+#define ADE7753_WGAIN      0x12
+#define ADE7753_WDIV       0x13
+#define ADE7753_CFNUM      0x14
+#define ADE7753_CFDEN      0x15
+#define ADE7753_IRMS       0x16
+#define ADE7753_VRMS       0x17
+#define ADE7753_IRMSOS     0x18
+#define ADE7753_VRMSOS     0x19
+#define ADE7753_VGAIN      0x1A
+#define ADE7753_VADIV      0x1B
+#define ADE7753_LINECYC    0x1C
+#define ADE7753_ZXTOUT     0x1D
+#define ADE7753_SAGCYC     0x1E
+#define ADE7753_SAGLVL     0x1F
+#define ADE7753_IPKLVL     0x20
+#define ADE7753_VPKLVL     0x21
+#define ADE7753_IPEAK      0x22
+#define ADE7753_RSTIPEAK   0x23
+#define ADE7753_VPEAK      0x24
+#define ADE7753_RSTVPEAK   0x25
+#define ADE7753_TEMP       0x26
 
 
-// Register values
+// gain settings
+#define ADE7753_GAIN_PGA_CH1   0
+#define ADE7753_GAIN_SCALE_CH1 3
+#define ADE7753_GAIN_PGA_CH2   5
 
-// Gain for CH2 is 2 and CH1 is 16 at 0.5 scale
-// #define ADE7753_GAIN_VAL        0x24
-// Try 0011 for CH1 gain
-// #define ADE7753_GAIN_VAL        0x22
-#define ADE7753_GAIN_VAL        0x21
+#define ADE7753_GAIN_1  0
+#define ADE7753_GAIN_2  1
+#define ADE7753_GAIN_4  2
+#define ADE7753_GAIN_8  3
+#define ADE7753_GAIN_16 4
+
+#define ADE7753_GAIN_SCALE_05   0
+#define ADE7753_GAIN_SCALE_025  1
+#define ADE7753_GAIN_SCALE_0125 2
 
 
-// MSB enabled for no-creep
-#define ADE7753_MODE_VAL        0x800C
-// #define ADE7753_MODE_VAL        0x000C
+// mode settings
+#define ADE7753_MODE_DISHPF     0    
+#define ADE7753_MODE_DISHLPF2   1
+#define ADE7753_MODE_DISCF      2
+#define ADE7753_MODE_DISSAG     3
+#define ADE7753_MODE_ASUSPEND   4
+#define ADE7753_MODE_TEMPSEL    5
+#define ADE7753_MODE_SWRST      6
+#define ADE7753_MODE_CYCMODE    7
+#define ADE7753_MODE_DISH1      8
+#define ADE7753_MODE_DISH2      9
+#define ADE7753_MODE_SWAP      10
+#define ADE7753_MODE_DTRT      11
+#define ADE7753_MODE_WAVSEL    13
+#define ADE7753_MODE_POAM      15
+
+
+#define ADE7753_IRQ_AEHF    0
+#define ADE7753_IRQ_SAG     1
+#define ADE7753_IRQ_CYCEND  2
+#define ADE7753_IRQ_WSMP    3
+#define ADE7753_IRQ_ZX      4
+#define ADE7753_IRQ_TEMP    5
+#define ADE7753_IRQ_RESET   6
+#define ADE7753_IRQ_AEOF    7
+#define ADE7753_IRQ_PKV     8
+#define ADE7753_IRQ_PKI     9
+#define ADE7753_IRQ_VAEHF  10
+#define ADE7753_IRQ_VAEOF  11
+#define ADE7753_IRQ_ZXTO   12
+#define ADE7753_IRQ_PPOS   13
+#define ADE7753_IRQ_PNEG   14
+
+#endif // __ADE7753_H__

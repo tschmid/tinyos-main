@@ -71,10 +71,10 @@ implementation {
 
   event void Boot.booted() {
     call AMControl.start();
-    call MeterControl.start();
   }
 
   event void AMControl.startDone(error_t err) {
+    call MeterControl.start();
   }
 
   void readEnergy() {
